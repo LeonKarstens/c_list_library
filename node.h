@@ -60,6 +60,7 @@ Node* add_node(LinkedList* linkedList, Card* card);
 //removes the specified node
 void remove_node(Node* currentNode);
 
+Node* get_first_node(LinkedList* linkedList);
 
 void print_node_details(Node* currentNode);
 
