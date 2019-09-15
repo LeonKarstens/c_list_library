@@ -5,7 +5,6 @@
 #include "node.h"
 
 int main() {
-
     LinkedList* linkedListOne = create_linked_list();
     LinkedList* linkedListTwo = create_linked_list();
 
@@ -28,74 +27,17 @@ int main() {
     printf("List One:");
     add_node_to_start(linkedListOne, (GenericData *) a);
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
+    printf("\n");
 
     printf("List One:");
     add_node_to_start(linkedListOne, (GenericData *) b);
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
+    printf("\n");
 
     printf("List One:");
-    print_list_of_nodes(linkedListOne, stdout, card_printing_function);
     add_node_to_start(linkedListOne, (GenericData *) c);
-
-    printf("List One:");
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
-
-//
-//    add_node(linkedListOne, a);
-//    add_node(linkedListTwo, b);
-//
-//    printf("Original setup:\n");
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//    transfer_last_node(linkedListTwo, linkedListOne);
-//    printf("Transferring last node from one to two:\n");
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//    transfer_last_node(linkedListTwo, linkedListOne);
-//    printf("Transferring last node from one to two:\n");
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//    transfer_last_node(linkedListOne, linkedListTwo);
-//    printf("Transferring last node from Two to One:\n");
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//    transfer_last_node(linkedListOne, linkedListTwo);
-//    printf("Transferring last node from Two to One:\n");
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//    printf("Adding a node cc to One:\n");
-//    add_node(linkedListOne, c);
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//    transfer_last_node(linkedListTwo, linkedListOne);
-//    printf("Transferring last node from one to two:\n");
-//    printf("List One:");
-//    print_list_of_nodes(linkedListOne);
-//    printf("List Two:");
-//    print_list_of_nodes(linkedListTwo);
-//
-//
-//    transfer_last_node(linkedListTwo, NULL);
-//    transfer_last_node(NULL, linkedListOne);
-//    transfer_last_node(NULL, NULL);
+    printf("\n");
 
     delete_linked_list(linkedListOne);
     delete_linked_list(linkedListTwo);
