@@ -1,9 +1,36 @@
 #include "node.h"
 
-
+/*
+ * Function for printing a card's contents from a node.
+ * (Used in print list of node when working with cards)
+ */
 void card_printing_function(void* value, FILE* outputStream){
     Card* currentCard = value;
     fprintf(outputStream, "%s ", currentCard->contents);
+}
+
+/*
+ * Function for creating a string from a card's content from a node.
+ * (Used in string_print_list_of_nodes when working with cards)
+ */
+void string_card_printing_function(void* value, char* stringPointer){
+    Card* currentCard = value;
+    size_t stringLength = strlen(currentCard->contents);
+
+    for (size_t i = 0; i < stringLength; i++){
+        stringPointer[i] = currentCard->contents[i];
+    }
+}
+
+bool card_comparison_function(GenericData * valOne, GenericData * valTwo){
+    Card* cardOne = (Card*) valOne;
+    Card* cardTwo = (Card*) valTwo;
+
+    if (strcmp(cardOne->contents, cardTwo->contents) == 0){
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /*
@@ -286,6 +313,7 @@ void delete_linked_list(LinkedList *headNode) {
 void print_list_of_nodes(LinkedList *headNode, FILE* outputStream,
         void(*printingFunction)(void*, FILE *)) {
     Node *tempNode = get_first_node(headNode);
+//    fprintf(stderr, "Printing list of nodes:");
     if (tempNode == NULL) {
         fprintf(outputStream, "\n");
         return;
@@ -303,6 +331,7 @@ void print_list_of_nodes(LinkedList *headNode, FILE* outputStream,
 }
 
 /*
+ * todo!!! TEST in node project
  * Prints the list of nodes from a given linked list to a string
  * Returns the string (or NULL if list is empty)
  *
@@ -333,12 +362,11 @@ char* string_print_list_of_nodes(
     int numberOfNodes = count_number_of_nodes(headNode);
     size_t charsPerDelimiter = strlen(delimiter);
 
-    //todo remember to free!
-    char* outputString = malloc(
-            charsPerNode*numberOfNodes*sizeof(char) + //chars in nodes
-            (numberOfNodes-1)*charsPerDelimiter*sizeof(char) + //delimiters
-            sizeof(char) //null terminator char
-    );
+    size_t outputStringLength = charsPerNode*numberOfNodes //chars in nodes
+                                + (numberOfNodes-1)*charsPerDelimiter //delimiters
+                                + 1; //null terminator char
+
+    char* outputString = calloc(outputStringLength, sizeof(char));
 
     //Sets current position to start of string pointer
     char* currentStringPositionPointer = outputString;
@@ -400,7 +428,7 @@ void file_print_list_of_nodes(FILE *outputStream, LinkedList *headNode) {
  *
  * Returns NULL if the node could not be retrieved
  *
- * Uses array starting at one notation
+ * Uses array starting at ZERO notation for nodeNumber
  */
 Node *find_nth_node(int nodeNumber, LinkedList *linkedList) {
     Node *tempNode = get_first_node(linkedList);
@@ -408,7 +436,7 @@ Node *find_nth_node(int nodeNumber, LinkedList *linkedList) {
         return NULL; //the list is empty
     }
 
-    for (int i = 1; i < nodeNumber; i++) {
+    for (int i = 0; i < nodeNumber; i++) {
         if (tempNode->next == NULL) {
             return NULL; //invalid index
         }
@@ -434,6 +462,42 @@ GenericData *get_value_of_nth_node(int nodeNumber, LinkedList *linkedList) {
 
     return tempNode->value;
 }
+
+/*
+ * Searches through the list from the start for a specified value,
+ * returning the first occurring index
+ * (or -1 if value was not found in the list)
+ */
+int return_index_of_value(void * targetValue, LinkedList* linkedList,
+        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo)){
+    int nodeIndex = 0;
+    bool isMatch;
+
+    Node *tempNode = get_first_node(linkedList);
+    if (tempNode == NULL) {
+        return -1;
+    }
+
+    do {
+        if (tempNode->next != NULL) {
+            isMatch = comparisonFunction(tempNode->value, targetValue);
+            if (isMatch){
+                return nodeIndex;
+            }
+
+            tempNode = tempNode->next;
+            nodeIndex++;
+        }
+    } while (tempNode->next != NULL);
+
+    isMatch = comparisonFunction(tempNode->value, targetValue);
+    if (isMatch) {
+        return nodeIndex;
+    } else {
+        return -1;
+    }
+}
+
 
 /*
  * Removes the nth node form the list (and re-links the list as appropriate)
