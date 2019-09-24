@@ -22,11 +22,51 @@ void string_card_printing_function(void* value, char* stringPointer){
     }
 }
 
-bool card_comparison_function(GenericData * valOne, GenericData * valTwo){
-    Card* cardOne = (Card*) valOne;
-    Card* cardTwo = (Card*) valTwo;
+/*
+ * Compares the strings (contents) of two cards to check if they are equivalent
+ *
+ * Used in return_first_index_of_value()
+ */
+bool card_comparison_function(GenericData * value, GenericData * targetValue){
+    Card* cardOne = (Card*) value;
+    Card* cardTwo = (Card*) targetValue;
 
     if (strcmp(cardOne->contents, cardTwo->contents) == 0){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*
+ * Compares the suits of two cards to check if they are equivalent
+ *
+ * Used in return_first_index_of_value()
+ */
+bool card_suit_comparison_function(GenericData * value,
+        GenericData * targetValue){
+
+    Card* cardOne = (Card*) value;
+    Card* cardTwo = (Card*) targetValue;
+
+    if (cardOne->suit == cardTwo->suit){
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*
+ * Compares the ranks of two cards to check if valOne (cardOne has a LOWER
+ * rank)
+ *
+ * Used in return_first_index_of_value()
+ */
+bool card_rank_comparison_function(GenericData * value, GenericData * targetValue){
+    Card* cardOne = (Card*) value;
+    Card* cardTwo = (Card*) targetValue;
+
+    if (cardOne->rank < cardTwo->rank){
         return true;
     } else {
         return false;
@@ -495,6 +535,45 @@ int return_index_of_value(void * targetValue, LinkedList* linkedList,
         return nodeIndex;
     } else {
         return -1;
+    }
+}
+
+/*
+ * Searches through the list from the start for a specified value,
+ * returns the indices of each occurrence into a storage array.
+ *
+ * Storage array should be at least the size of the array.
+ *
+ * (or -1 if value was not found in the list)
+ */
+void find_all_indices_of_value(void * targetValue,
+        LinkedList* linkedList, int* storageArray,
+        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo)){
+
+    int arrayPosition = 0;
+    int nodeIndex = 0;
+    bool isMatch;
+
+    Node *tempNode = get_first_node(linkedList);
+    if (tempNode == NULL) {
+        return;
+    }
+
+    do {
+        if (tempNode->next != NULL) {
+            isMatch = comparisonFunction(tempNode->value, targetValue);
+            if (isMatch){
+                storageArray[arrayPosition] = nodeIndex;
+                arrayPosition++;
+            }
+            tempNode = tempNode->next;
+            nodeIndex++;
+        }
+    } while (tempNode->next != NULL);
+
+    isMatch = comparisonFunction(tempNode->value, targetValue);
+    if (isMatch) {
+        storageArray[arrayPosition] = nodeIndex;
     }
 }
 

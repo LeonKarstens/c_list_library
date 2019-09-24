@@ -51,6 +51,10 @@ void card_printing_function(void* value, FILE* outputStream);
 
 bool card_comparison_function(GenericData * valOne, GenericData * valTwo);
 
+bool card_rank_comparison_function(GenericData * value, GenericData * targetValue);
+
+bool card_suit_comparison_function(GenericData * value, GenericData * targetValue);
+
 LinkedList *create_linked_list(void);
 
 void delete_linked_list(LinkedList *headNode);
@@ -96,6 +100,10 @@ void print_list_of_nodes(LinkedList *headNode, FILE* outputStream,
 int iterate_list(LinkedList *linkedList, int (*functionPointer)(void *));
 
 int return_index_of_value(void * targetValue, LinkedList* linkedList,
+        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo));
+
+void find_all_indices_of_value(void * targetValue,
+        LinkedList* linkedList, int* storageArray,
         bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo));
 
 #endif //NODE_NODE_H
