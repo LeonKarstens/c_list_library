@@ -1,77 +1,4 @@
-#include "node.h"
-
-/*
- * Function for printing a card's contents from a node.
- * (Used in print list of node when working with cards)
- */
-void card_printing_function(void* value, FILE* outputStream){
-    Card* currentCard = value;
-    fprintf(outputStream, "%s ", currentCard->contents);
-}
-
-/*
- * Function for creating a string from a card's content from a node.
- * (Used in string_print_list_of_nodes when working with cards)
- */
-void string_card_printing_function(void* value, char* stringPointer){
-    Card* currentCard = value;
-    size_t stringLength = strlen(currentCard->contents);
-
-    for (size_t i = 0; i < stringLength; i++){
-        stringPointer[i] = currentCard->contents[i];
-    }
-}
-
-/*
- * Compares the strings (contents) of two cards to check if they are equivalent
- *
- * Used in return_first_index_of_value()
- */
-bool card_comparison_function(GenericData * value, GenericData * targetValue){
-    Card* cardOne = (Card*) value;
-    Card* cardTwo = (Card*) targetValue;
-
-    if (strcmp(cardOne->contents, cardTwo->contents) == 0){
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/*
- * Compares the suits of two cards to check if they are equivalent
- *
- * Used in return_first_index_of_value()
- */
-bool card_suit_comparison_function(GenericData * value,
-        GenericData * targetValue){
-
-    Card* cardOne = (Card*) value;
-    Card* cardTwo = (Card*) targetValue;
-
-    if (cardOne->suit == cardTwo->suit){
-        return true;
-    } else {
-        return false;
-    }
-}
-
-/*
- * Compares the ranks of two cards to check if valOne (cardOne has a LOWER
- * rank)
- *
- * Used in return_first_index_of_value()
- */
-bool card_rank_comparison_function(GenericData * value, GenericData * targetValue){
-    Card* cardOne = (Card*) value;
-    Card* cardTwo = (Card*) targetValue;
-
-    if (cardOne->rank < cardTwo->rank){
-        return true;
-    } else {
-        return false;
-    }
-}
+#include "nodeLib.h"
 
 /*
  * Allocates space for a dynamically sized LinkedList structure which has no
@@ -158,7 +85,7 @@ Node *add_node_to_start(LinkedList *linkedList, GenericData *genericData) {
  *
  * If the list is empty, returns 0.
  */
-int iterate_list(LinkedList *linkedList, int (*functionPointer)(void*)) {
+int iterate_list(LinkedList *linkedList, int (*nodeFunction)(void *)) {
     Node *tempNode = linkedList->firstNode;
     int functionStatus = 0;
     int returnValue = 0;
@@ -168,8 +95,8 @@ int iterate_list(LinkedList *linkedList, int (*functionPointer)(void*)) {
     }
 
     while (tempNode->next != NULL) {
-        returnValue = functionPointer(tempNode->value);
-        if(returnValue != 0){
+        returnValue = nodeFunction(tempNode->value);
+        if (returnValue != 0) {
             functionStatus = returnValue;
         }
 
@@ -177,8 +104,8 @@ int iterate_list(LinkedList *linkedList, int (*functionPointer)(void*)) {
 
     }
     //Otherwise won't go to last one ever
-    returnValue = functionPointer(tempNode->value);
-    if(returnValue != 0){
+    returnValue = nodeFunction(tempNode->value);
+    if (returnValue != 0) {
         functionStatus = returnValue;
     }
 
@@ -284,13 +211,13 @@ void remove_node(Node *currentNode) {
         free(currentNode->value);
         free(currentNode);
     } else if ((currentNode->next == NULL) && (currentNode->previous !=
-                                               NULL)) {
+            NULL)) {
         //last node and not only node
         currentNode->previous->next = NULL;
         free(currentNode->value);
         free(currentNode);
     } else if ((currentNode->previous == NULL) && (currentNode->next ==
-                                                   NULL)) {
+            NULL)) {
         //first and last and only node
         //update LinkedList headNode->firstNode
         currentNode->head->firstNode = NULL;
@@ -350,8 +277,8 @@ void delete_linked_list(LinkedList *headNode) {
  *
  * If the list is empty prints a new line character.
  */
-void print_list_of_nodes(LinkedList *headNode, FILE* outputStream,
-        void(*printingFunction)(void*, FILE *)) {
+void print_list_of_nodes(LinkedList *headNode, FILE *outputStream,
+        void(*printingFunction)(void *, FILE *)) {
     Node *tempNode = get_first_node(headNode);
 //    fprintf(stderr, "Printing list of nodes:");
     if (tempNode == NULL) {
@@ -371,27 +298,32 @@ void print_list_of_nodes(LinkedList *headNode, FILE* outputStream,
 }
 
 /*
- * todo!!! TEST in node project
  * Prints the list of nodes from a given linked list to a string
  * Returns the string (or NULL if list is empty)
  *
  * prints in form:
  * "NxNxN"
- * where X is the the value of the nth node, x is the delimiter string
+ * where N is the the value of the nth node, x is the delimiter string
  *
  * Takes: the LinkedList to print, a string for the delimiter,
- * an fp for calculating number of chars per node, a string printing function
+ * an int for the MAXIMUM number of chars per node, (e.g. for card where
+ * contents is "SR" length is 2)
+ * and an fp for interpreting how to print the node
  *
- * charsInNodeValue returns the number of chars for a given node
- * (e.g. for card where contents is "SR" length is 2)
+ * The string printing function should return a pointer to the string to add
+ * to the output string based on the node.value supplied to it.
+ *
+ * To account for variable length nodes, chars per node parameter is given as
+ * maxCharsPerNode (NOTE: if the max length of a node to be printed is unknown
+ * then this function should not be used)
  *
  * If the list is empty prints a new line character.
  */
-char* string_print_list_of_nodes(
+char *string_print_list_of_nodes(
         LinkedList *headNode,
-        char* delimiter,
-        int charsPerNode,
-        void(*stringPrintFunction)(void*, char*)) {
+        char *delimiter,
+        int maxCharsPerNode,
+        char *(*stringPrintFunction)(void *)) {
 
     Node *tempNode = get_first_node(headNode);
     //checks if the list is empty
@@ -402,62 +334,30 @@ char* string_print_list_of_nodes(
     int numberOfNodes = count_number_of_nodes(headNode);
     size_t charsPerDelimiter = strlen(delimiter);
 
-    size_t outputStringLength = charsPerNode*numberOfNodes //chars in nodes
-                                + (numberOfNodes-1)*charsPerDelimiter //delimiters
-                                + 1; //null terminator char
+    size_t outputStringLength =
+            maxCharsPerNode * numberOfNodes //chars in nodes
+                    + (numberOfNodes - 1) * charsPerDelimiter //delimiters
+                    + strlen(" "); //null terminator char
 
-    char* outputString = calloc(outputStringLength, sizeof(char));
-
-    //Sets current position to start of string pointer
-    char* currentStringPositionPointer = outputString;
+    char *outputString = calloc(outputStringLength, sizeof(char));
 
     do {
         if (tempNode->next != NULL) {
-            //prints node to current string position
-            stringPrintFunction(tempNode->value, currentStringPositionPointer);
-            //increments pointer by numOfChars in node
-            currentStringPositionPointer += charsPerNode;
-            //prints the delimiter to the string
-            for (size_t i = 0; i < charsPerDelimiter; i++){
-                currentStringPositionPointer[0] = delimiter[i];
-                currentStringPositionPointer++;
-            }
+            //appends the string for node to outputString
+            char *nodeString = stringPrintFunction(tempNode->value);
+            strcat(outputString, nodeString);
+            free(nodeString);
+            //appends the delimiter to outputString
+            strcat(outputString, delimiter);
             tempNode = tempNode->next;
         }
     } while (tempNode->next != NULL);
+    //appends the final node value to outputString
+    char *nodeString = stringPrintFunction(tempNode->value);
+    strcat(outputString, nodeString);
+    free(nodeString);
 
-    stringPrintFunction(tempNode->value, currentStringPositionPointer);
     return outputString;
-}
-
-/*
- * Prints the contents of each node in list in order from start to end in
- * the form 1A2B3C
- *
- * If the list is empty prints a new line.
- *
- * Takes a file pointer for the output and a LinkedList to print.
- *
- * Includes new line character at the end.
- */
-void file_print_list_of_nodes(FILE *outputStream, LinkedList *headNode) {
-    Node *tempNode = get_first_node(headNode);
-
-    if (tempNode == NULL) {
-        fprintf(outputStream, "\n");
-        return;
-    }
-
-    do {
-        if (tempNode->next != NULL) {
-            Card* value = (Card*)tempNode->value;
-            fprintf(outputStream, "%s", value->contents);
-            tempNode = tempNode->next;
-        }
-    } while (tempNode->next != NULL);
-
-    Card* value = (Card*)tempNode->value;
-    fprintf(outputStream, "%s\n", value->contents);
 }
 
 /*
@@ -508,8 +408,8 @@ GenericData *get_value_of_nth_node(int nodeNumber, LinkedList *linkedList) {
  * returning the first occurring index
  * (or -1 if value was not found in the list)
  */
-int return_index_of_value(void * targetValue, LinkedList* linkedList,
-        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo)){
+int return_first_index_of_value(void *targetValue, LinkedList *linkedList,
+        bool (*comparisonFunction)(GenericData *, GenericData *)) {
     int nodeIndex = 0;
     bool isMatch;
 
@@ -521,7 +421,7 @@ int return_index_of_value(void * targetValue, LinkedList* linkedList,
     do {
         if (tempNode->next != NULL) {
             isMatch = comparisonFunction(tempNode->value, targetValue);
-            if (isMatch){
+            if (isMatch) {
                 return nodeIndex;
             }
 
@@ -546,9 +446,9 @@ int return_index_of_value(void * targetValue, LinkedList* linkedList,
  *
  * (or -1 if value was not found in the list)
  */
-void find_all_indices_of_value(void * targetValue,
-        LinkedList* linkedList, int* storageArray,
-        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo)){
+void find_all_indices_of_value(void *targetValue,
+        LinkedList *linkedList, int *storageArray,
+        bool (*comparisonFunction)(GenericData *, GenericData *)) {
 
     int arrayPosition = 0;
     int nodeIndex = 0;
@@ -562,7 +462,7 @@ void find_all_indices_of_value(void * targetValue,
     do {
         if (tempNode->next != NULL) {
             isMatch = comparisonFunction(tempNode->value, targetValue);
-            if (isMatch){
+            if (isMatch) {
                 storageArray[arrayPosition] = nodeIndex;
                 arrayPosition++;
             }
@@ -625,8 +525,8 @@ int count_number_of_nodes(LinkedList *linkedList) {
  * Returns true on success or false otherwise e.g. if it encounters a null
  * (e.g. no elements in original list)
  */
-bool transfer_last_node(LinkedList *destinationList, LinkedList*originalList,
-        void(*genericDeepCopy(GenericData *, const GenericData*))) {
+bool transfer_last_node(LinkedList *destinationList, LinkedList *originalList,
+        void(*generic_deep_copy(GenericData *, const GenericData *))) {
 
     if (originalList == NULL || destinationList == NULL) {
         return false;
@@ -639,7 +539,7 @@ bool transfer_last_node(LinkedList *destinationList, LinkedList*originalList,
     }
 
     GenericData *copiedData = (GenericData *) malloc(sizeof(GenericData));
-    genericDeepCopy(copiedData, tempNode->value);
+    generic_deep_copy(copiedData, tempNode->value);
 
     remove_node(tempNode);
     add_node(destinationList, copiedData);

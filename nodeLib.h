@@ -1,5 +1,5 @@
-#ifndef NODE_NODE_H
-#define NODE_NODE_H
+#ifndef NODE_NODELIB_H
+#define NODE_NODELIB_H
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -106,4 +106,4 @@ void find_all_indices_of_value(void * targetValue,
         LinkedList* linkedList, int* storageArray,
         bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo));
 
-#endif //NODE_NODE_H
+#endif //NODE_NODELIB_H

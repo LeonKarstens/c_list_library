@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "node.h"
+#include "nodeLib.h"
 
 void print_storage_array(int* storageArray){
     printf("[");

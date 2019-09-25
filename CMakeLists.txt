@@ -3,7 +3,7 @@ project(node C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_library(nodeLib node.c node.h)
+add_library(nodeLib nodeLib.c nodeLib.h)
 add_executable(nodeTest main.c)
 
 target_link_libraries(nodeTest nodeLib)
