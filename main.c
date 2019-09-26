@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nodeLib.h"
+#include "cardLib.h"
 
 void print_storage_array(int* storageArray){
     printf("[");
@@ -76,16 +76,20 @@ int main() {
 
 
 
-    index = return_index_of_value(a, linkedListOne, card_comparison_function);
+    index = return_first_index_of_value(a, linkedListOne,
+            card_comparison_function);
     printf("The index of %s was: %d\n", a->contents, index);
 
-    index = return_index_of_value(c, linkedListOne, card_comparison_function);
+    index = return_first_index_of_value(c, linkedListOne,
+            card_comparison_function);
     printf("The index of %s was: %d\n", c->contents, index);
 
-    index = return_index_of_value(b, linkedListOne, card_comparison_function);
+    index = return_first_index_of_value(b, linkedListOne,
+            card_comparison_function);
     printf("The index of %s was: %d\n", b->contents, index);
 
-    index = return_index_of_value(d, linkedListOne, card_comparison_function);
+    index = return_first_index_of_value(d, linkedListOne,
+            card_comparison_function);
     printf("The index of %s was: %d\n", d->contents, index);
 
 

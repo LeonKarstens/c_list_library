@@ -1,5 +1,5 @@
-#ifndef NODE_NODELIB_H
-#define NODE_NODELIB_H
+#ifndef ASS3_NODELIB_H
+#define ASS3_NODELIB_H
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -10,16 +10,7 @@
  * Data that is non specific (void pointer) so that anything can be stored
  * in linked list
  */
-typedef void *GenericData;
-
-/*
- * Example data structure for the linked list
- */
-typedef struct {
-    int rank;
-    char suit;
-    char contents[3];
-} Card;
+typedef void *GenericData; //style.sh bug - PIAZZA 365
 
 /*
  * The LinkedList is a special type of sentinel for the doubly linked list of
@@ -47,14 +38,8 @@ typedef struct Node {
     struct Node *previous;
 } Node;
 
-void card_printing_function(void* value, FILE* outputStream);
 
-bool card_comparison_function(GenericData * valOne, GenericData * valTwo);
-
-bool card_rank_comparison_function(GenericData * value, GenericData * targetValue);
-
-bool card_suit_comparison_function(GenericData * value, GenericData * targetValue);
-
+//Linked List functions
 LinkedList *create_linked_list(void);
 
 void delete_linked_list(LinkedList *headNode);
@@ -89,21 +74,22 @@ void remove_node(Node *currentNode);
 
 Node *add_node_to_start(LinkedList *linkedList, GenericData *genericData);
 
-bool transfer_last_node(LinkedList *destinationList,
-        LinkedList *originalList,
-        void(*genericDeepCopy(GenericData *destination,
-                const GenericData *original)));
+void print_list_of_nodes(LinkedList *headNode,
+        FILE *outputStream, void (*printingFunction)(void *, FILE *pFILE));
 
-void print_list_of_nodes(LinkedList *headNode, FILE* outputStream,
-        void (*printingFunction)(void*, FILE *pFILE));
+char *string_print_list_of_nodes(
+        LinkedList *headNode,
+        char *delimiter,
+        int maxCharsPerNode,
+        char *(*stringPrintFunction)(void *));
 
-int iterate_list(LinkedList *linkedList, int (*functionPointer)(void *));
+int iterate_list(LinkedList *linkedList, int (*nodeFunction)(void *));
 
-int return_index_of_value(void * targetValue, LinkedList* linkedList,
-        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo));
+int return_first_index_of_value(void *targetValue, LinkedList *linkedList,
+        bool (*comparisonFunction)(GenericData *valOne, GenericData *valTwo));
 
-void find_all_indices_of_value(void * targetValue,
-        LinkedList* linkedList, int* storageArray,
-        bool (*comparisonFunction)(GenericData* valOne, GenericData*valTwo));
+void find_all_indices_of_value(void *targetValue,
+        LinkedList *linkedList, int *indexStorage,
+        bool (*comparisonFunction)(GenericData *valOne, GenericData *valTwo));
 
-#endif //NODE_NODELIB_H
+#endif //ASS3_NODELIB_H
