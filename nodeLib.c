@@ -1,6 +1,23 @@
 #include "nodeLib.h"
 
 /*
+ * Function for creating a string from a value (void*) which holds a string
+ * (Used in string_print_list_of_node)
+ *
+ * Returns a pointer to the created string
+ */
+char *string_printing_function(void *value) {
+    char *currentString = value;
+    size_t stringLength = strlen(currentString) + strlen(" ");
+
+    char *outputString = malloc(sizeof(char) * stringLength);
+
+    snprintf(outputString, stringLength, "%s", currentString);
+
+    return outputString;
+}
+
+/*
  * Allocates space for a dynamically sized LinkedList structure which has no
  * firstNode element.
  * Acts as a sort of pointer to the rest of the list and should not be removed
@@ -8,9 +25,10 @@
  *
  * Returns pointer to the linked list head
  */
-LinkedList *create_linked_list(void) {
+LinkedList *create_linked_list(GenericNodeFreeFunction nodeFreeFunction) {
     LinkedList *headNode = (LinkedList *) malloc(sizeof(LinkedList));
     headNode->firstNode = NULL;
+    headNode->nodeFreeFunction = nodeFreeFunction;
     return headNode;
 }
 
@@ -85,7 +103,7 @@ Node *add_node_to_start(LinkedList *linkedList, GenericData *genericData) {
  *
  * If the list is empty, returns 0.
  */
-int iterate_list(LinkedList *linkedList, int (*nodeFunction)(void *)) {
+int iterate_list(LinkedList *linkedList, GenericNodeFunction nodeFunction) {
     Node *tempNode = linkedList->firstNode;
     int functionStatus = 0;
     int returnValue = 0;
@@ -110,6 +128,57 @@ int iterate_list(LinkedList *linkedList, int (*nodeFunction)(void *)) {
     }
 
     return functionStatus;
+}
+
+/*
+ * Since the nodeLib works with generics, when printing, the amount of space
+ * to allocate may not be known before hand e.g. dynamically sized strings
+ *
+ * This function takes a linked list and iterates through it with a generic
+ * node function (in this case used to determine the number of chars needed
+ * to print the LARGEST node in the list.
+ *
+ * Returns -1 if error encountered, number of chars otherwise
+ */
+int determine_max_node_print_size(LinkedList *linkedList,
+        GenericNodeStringPrintFunction printingFunction) {
+    if (linkedList == NULL){
+        return -1;
+    }
+    if (count_number_of_nodes(linkedList) == 0){
+        //no nodes therefore, unable to determine size of largest node
+        return -1;
+    }
+
+    Node *tempNode = linkedList->firstNode;
+    size_t stringLength = 0;
+    int sizeOfLargestNode = 0;
+
+    if (tempNode == NULL) {
+        return -1;
+    }
+
+    while (tempNode->next != NULL) {
+        char* formattedNode = printingFunction(tempNode->value);
+        stringLength = strlen(formattedNode);
+        free(formattedNode);
+
+        if (stringLength > sizeOfLargestNode) {
+            sizeOfLargestNode = stringLength;
+        }
+        tempNode = tempNode->next;
+    }
+
+    //Otherwise won't go to last one ever
+    char* formattedNode = printingFunction(tempNode->value);
+    stringLength = strlen(formattedNode);
+    free(formattedNode);
+
+    if (stringLength > sizeOfLargestNode) {
+        sizeOfLargestNode = stringLength;
+    }
+
+    return sizeOfLargestNode;
 }
 
 /*
@@ -208,12 +277,18 @@ void remove_node(Node *currentNode) {
 
         //update LinkedList headNode->firstNode
         currentNode->head->firstNode = currentNode->next;
+        if (currentNode->head->nodeFreeFunction != NULL){
+            currentNode->head->nodeFreeFunction(currentNode->value);
+        }
         free(currentNode->value);
         free(currentNode);
     } else if ((currentNode->next == NULL) && (currentNode->previous !=
             NULL)) {
         //last node and not only node
         currentNode->previous->next = NULL;
+        if (currentNode->head->nodeFreeFunction != NULL){
+            currentNode->head->nodeFreeFunction(currentNode->value);
+        }
         free(currentNode->value);
         free(currentNode);
     } else if ((currentNode->previous == NULL) && (currentNode->next ==
@@ -221,11 +296,17 @@ void remove_node(Node *currentNode) {
         //first and last and only node
         //update LinkedList headNode->firstNode
         currentNode->head->firstNode = NULL;
+        if (currentNode->head->nodeFreeFunction != NULL){
+            currentNode->head->nodeFreeFunction(currentNode->value);
+        }
         free(currentNode->value);
         free(currentNode);
     } else {
         //not first, not last, not alone
         link_nodes(currentNode->previous, currentNode->next);
+        if (currentNode->head->nodeFreeFunction != NULL){
+            currentNode->head->nodeFreeFunction(currentNode->value);
+        }
         free(currentNode->value);
         free(currentNode);
     }
@@ -313,22 +394,26 @@ void print_list_of_nodes(LinkedList *headNode, FILE *outputStream,
  * The string printing function should return a pointer to the string to add
  * to the output string based on the node.value supplied to it.
  *
- * To account for variable length nodes, chars per node parameter is given as
- * maxCharsPerNode (NOTE: if the max length of a node to be printed is unknown
- * then this function should not be used)
+ * To account for variable length nodes, maximum chars per node is
+ * calculated using determine_max_node_print_size() given as
+ * maxCharsPerNode
  *
- * If the list is empty prints a new line character.
+ * If the list is empty prints a new line character. todo
  */
-char *string_print_list_of_nodes(
-        LinkedList *headNode,
-        char *delimiter,
-        int maxCharsPerNode,
-        char *(*stringPrintFunction)(void *)) {
+char *string_print_list_of_nodes(LinkedList *headNode, char *delimiter,
+        GenericNodeStringPrintFunction printingFunction) {
 
     Node *tempNode = get_first_node(headNode);
-    //checks if the list is empty
+
     if (tempNode == NULL) {
-        return NULL;
+        return NULL; //checks if the list is empty
+    }
+
+    int maxCharsPerNode = determine_max_node_print_size(headNode,
+            printingFunction);
+
+    if (maxCharsPerNode < 0){
+        return NULL; // checks that the max chars per node param is valid
     }
 
     int numberOfNodes = count_number_of_nodes(headNode);
@@ -344,7 +429,7 @@ char *string_print_list_of_nodes(
     do {
         if (tempNode->next != NULL) {
             //appends the string for node to outputString
-            char *nodeString = stringPrintFunction(tempNode->value);
+            char *nodeString = printingFunction(tempNode->value);
             strcat(outputString, nodeString);
             free(nodeString);
             //appends the delimiter to outputString
@@ -353,7 +438,7 @@ char *string_print_list_of_nodes(
         }
     } while (tempNode->next != NULL);
     //appends the final node value to outputString
-    char *nodeString = stringPrintFunction(tempNode->value);
+    char *nodeString = printingFunction(tempNode->value);
     strcat(outputString, nodeString);
     free(nodeString);
 
@@ -409,7 +494,7 @@ GenericData *get_value_of_nth_node(int nodeNumber, LinkedList *linkedList) {
  * (or -1 if value was not found in the list)
  */
 int return_first_index_of_value(void *targetValue, LinkedList *linkedList,
-        bool (*comparisonFunction)(GenericData *, GenericData *)) {
+        GenericComparisonFunction comparisonFunction) {
     int nodeIndex = 0;
     bool isMatch;
 
@@ -439,6 +524,31 @@ int return_first_index_of_value(void *targetValue, LinkedList *linkedList,
 }
 
 /*
+ * Creates a storage array of the size of the linkedList.
+ * Used for storing information about the linkedList e.g.
+ * indices which match a value.
+ */
+int* create_storage_array(LinkedList* linkedList){
+    if (linkedList == NULL){
+        return NULL;
+    }
+    //Stores result of search by index. Can't be more indices than size of list
+    int linkedListSize = count_number_of_nodes(linkedList);
+
+    if (linkedListSize < 1){
+        return NULL;
+    }
+
+    int *indexStorage = malloc(sizeof(int) * linkedListSize);
+    for (int i = 0; i < linkedListSize; i++) {
+        //Fill the array with -1 (acts as sentinel for invalid index)
+        indexStorage[i] = -1;
+    }
+
+    return indexStorage;
+}
+
+/*
  * Searches through the list from the start for a specified value,
  * returns the indices of each occurrence into a storage array.
  *
@@ -446,9 +556,13 @@ int return_first_index_of_value(void *targetValue, LinkedList *linkedList,
  *
  * (or -1 if value was not found in the list)
  */
-void find_all_indices_of_value(void *targetValue,
-        LinkedList *linkedList, int *storageArray,
-        bool (*comparisonFunction)(GenericData *, GenericData *)) {
+int * find_all_indices_of_value(void *targetValue, LinkedList *linkedList,
+        GenericComparisonFunction comparisonFunction) {
+
+    int * indexStorage = create_storage_array(linkedList);
+    if(indexStorage == NULL){
+        return NULL;
+    }
 
     int arrayPosition = 0;
     int nodeIndex = 0;
@@ -456,14 +570,14 @@ void find_all_indices_of_value(void *targetValue,
 
     Node *tempNode = get_first_node(linkedList);
     if (tempNode == NULL) {
-        return;
+        return NULL;
     }
 
     do {
         if (tempNode->next != NULL) {
             isMatch = comparisonFunction(tempNode->value, targetValue);
             if (isMatch) {
-                storageArray[arrayPosition] = nodeIndex;
+                indexStorage[arrayPosition] = nodeIndex;
                 arrayPosition++;
             }
             tempNode = tempNode->next;
@@ -473,8 +587,10 @@ void find_all_indices_of_value(void *targetValue,
 
     isMatch = comparisonFunction(tempNode->value, targetValue);
     if (isMatch) {
-        storageArray[arrayPosition] = nodeIndex;
+        indexStorage[arrayPosition] = nodeIndex;
     }
+
+    return indexStorage;
 }
 
 
@@ -519,29 +635,94 @@ int count_number_of_nodes(LinkedList *linkedList) {
 }
 
 /*
- * Remove the last node from the originalList and adds it as the last node
+ * Takes a node number, a destination list and a starting list,
+ * as well as a copying function to clone node values.
+ * Remove the nth node from the originalList and adds it as the last node
  * on the destination list.
+ *
+ * Takes a genericCopyFunction
  *
  * Returns true on success or false otherwise e.g. if it encounters a null
  * (e.g. no elements in original list)
  */
-bool transfer_last_node(LinkedList *destinationList, LinkedList *originalList,
-        void(*generic_deep_copy(GenericData *, const GenericData *))) {
+bool transfer_nth_node(int nodeNumber, LinkedList *destinationList,
+        LinkedList *originalList, GenericCopyFunction genericCopyFunction) {
 
     if (originalList == NULL || destinationList == NULL) {
         return false;
     }
 
-    Node *tempNode = get_last_node(originalList);
+    Node *tempNode = find_nth_node(nodeNumber, originalList);
 
     if (tempNode == NULL) {
         return false;
     }
 
-    GenericData *copiedData = (GenericData *) malloc(sizeof(GenericData));
-    generic_deep_copy(copiedData, tempNode->value);
+    GenericData *copiedData = genericCopyFunction(tempNode->value);
+
 
     remove_node(tempNode);
     add_node(destinationList, copiedData);
     return true;
+}
+
+int find_index_of_lowest_valued_node(LinkedList* linkedList,
+        GenericComparisonFunction comparisonFunction){
+    int lowestValuedNodeIndex = 0;
+    int currentNodeIndex = 0;
+    bool isLesser;
+
+    Node *tempNode = get_first_node(linkedList);
+    if (tempNode == NULL) {
+        return -1;
+    }
+
+    do {
+        if (tempNode->next != NULL) {
+            isLesser = comparisonFunction(tempNode->value,
+                    get_value_of_nth_node(lowestValuedNodeIndex, linkedList));
+            if (isLesser) {
+                lowestValuedNodeIndex = currentNodeIndex;
+            }
+            tempNode = tempNode->next;
+            currentNodeIndex++;
+        }
+    } while (tempNode->next != NULL);
+
+    isLesser = comparisonFunction(tempNode->value,
+            get_value_of_nth_node(lowestValuedNodeIndex, linkedList));
+    if (isLesser) {
+        lowestValuedNodeIndex = currentNodeIndex;
+    }
+    return lowestValuedNodeIndex;
+}
+
+/*
+ * Non - in place sorting algorithm which creates a new list and populates
+ * it by finding the lowest value from the original list (form comparison
+ * function) - removes from the old list and adds to the new list.
+ */
+void sort_linked_list(LinkedList **originalList,
+        GenericComparisonFunction comparisonFunction,
+        GenericCopyFunction copyFunction,
+        GenericNodeFreeFunction nodeFreeFunction) {
+    if (*originalList == NULL){
+        return;
+    }
+    if (count_number_of_nodes(*originalList) == 0){
+        return;
+    }
+
+    LinkedList* sortedList = create_linked_list(nodeFreeFunction);
+
+    while(count_number_of_nodes(*originalList) > 0){
+        int lowest_val_node_index = find_index_of_lowest_valued_node(
+                *originalList,
+                comparisonFunction);
+        transfer_nth_node(lowest_val_node_index, sortedList, *originalList,
+                copyFunction);
+    }
+
+    delete_linked_list(*originalList);
+    *originalList = sortedList;
 }

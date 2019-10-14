@@ -17,8 +17,8 @@ void print_storage_array(int* storageArray){
 
 
 int main() {
-    LinkedList* linkedListOne = create_linked_list();
-    LinkedList* linkedListTwo = create_linked_list();
+    LinkedList* linkedListOne = create_linked_list(NULL);
+    LinkedList* linkedListTwo = create_linked_list(NULL);
     int index;
 
     Card* a = malloc(sizeof(Card));
@@ -47,21 +47,10 @@ int main() {
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
     printf("\n");
 
-
-
-
-
-
-
-
     printf("List One:");
     add_node_to_start(linkedListOne, (GenericData *) b);
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
     printf("\n");
-
-
-
-
 
     printf("List One:");
     add_node_to_start(linkedListOne, (GenericData *) c);
@@ -72,7 +61,6 @@ int main() {
     add_node_to_start(linkedListOne, (GenericData *) a);
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
     printf("\n");
-
 
 
 
@@ -93,12 +81,8 @@ int main() {
     printf("The index of %s was: %d\n", d->contents, index);
 
 
-    int storageArray[50];
-    for (int i = 0; i< 50; i++){
-        storageArray[i] = -1;
-    }
     printf("The indices for entries with the suit %c are: ", d->suit);
-    find_all_indices_of_value(d, linkedListOne, storageArray,
+    int* storageArray = find_all_indices_of_value(d, linkedListOne,
             card_suit_comparison_function);
     print_storage_array(storageArray);
 

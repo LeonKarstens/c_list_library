@@ -1,5 +1,5 @@
-#ifndef ASS3_NODELIB_H
-#define ASS3_NODELIB_H
+#ifndef ASS4_NODELIB_H
+#define ASS4_NODELIB_H
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -8,9 +8,48 @@
 
 /*
  * Data that is non specific (void pointer) so that anything can be stored
- * in linked list
+ * in linked list (including pointers to structs)
  */
 typedef void *GenericData; //style.sh bug - PIAZZA 365
+
+/*
+ * A function pointer which takes a void pointer (could be a pointer to
+ * anything and returns an int (used as a status indicator based on the
+ * functions success or failure)
+ *
+ * Used in iterate_list to apply a given function to each element in the list
+ */
+typedef int (*GenericNodeFunction)(void *);
+
+/*
+ * A function which takes a void * (could be a pointer to anything,
+ * including a struct).
+ *
+ * Frees the dynamically allocated elements of the data referenced by the
+ * void *.
+ */
+typedef void (*GenericNodeFreeFunction)(void *);
+
+/*
+ * A function which takes a GenericData type (the value stored by a node)
+ * and returns a string representation of the given value
+ */
+typedef char* (*GenericNodeStringPrintFunction)(void *);
+
+/*
+ * Function pointer for comparing two genericData elements, returns a bool
+ * based on the outcome of the comparison
+ */
+typedef bool (*GenericComparisonFunction)(
+        GenericData *valOne,
+        GenericData *valTwo);
+
+/*
+ * Function pointer for copying a value of Generic Data type (similar to
+ * clone or deep copy),
+ * returns a pointer to cloned data
+ */
+typedef GenericData *(*GenericCopyFunction)(GenericData *value);
 
 /*
  * The LinkedList is a special type of sentinel for the doubly linked list of
@@ -23,6 +62,7 @@ typedef void *GenericData; //style.sh bug - PIAZZA 365
  */
 typedef struct LinkedList {
     struct Node *firstNode;
+    GenericNodeFreeFunction nodeFreeFunction;
 } LinkedList;
 
 /*
@@ -38,13 +78,17 @@ typedef struct Node {
     struct Node *previous;
 } Node;
 
+char *string_printing_function(void *value);
 
 //Linked List functions
-LinkedList *create_linked_list(void);
+LinkedList *create_linked_list(GenericNodeFreeFunction nodeFreeFunction);
+
+Node *add_node_to_start(LinkedList *linkedList, GenericData *genericData);
+
+void print_list_of_nodes(LinkedList *headNode, FILE *outputStream,
+        void(*printingFunction)(void *, FILE *));
 
 void delete_linked_list(LinkedList *headNode);
-
-void file_print_list_of_nodes(FILE *outputStream, LinkedList *headNode);
 
 int count_number_of_nodes(LinkedList *linkedList);
 
@@ -72,24 +116,20 @@ int remove_nth_node(int nodeNumber, LinkedList *linkedList);
 //removes the specified node
 void remove_node(Node *currentNode);
 
-Node *add_node_to_start(LinkedList *linkedList, GenericData *genericData);
+char *string_print_list_of_nodes(LinkedList *headNode, char *delimiter,
+        GenericNodeStringPrintFunction printingFunction);
 
-void print_list_of_nodes(LinkedList *headNode,
-        FILE *outputStream, void (*printingFunction)(void *, FILE *pFILE));
-
-char *string_print_list_of_nodes(
-        LinkedList *headNode,
-        char *delimiter,
-        int maxCharsPerNode,
-        char *(*stringPrintFunction)(void *));
-
-int iterate_list(LinkedList *linkedList, int (*nodeFunction)(void *));
+int iterate_list(LinkedList *linkedList, GenericNodeFunction nodeFunction);
 
 int return_first_index_of_value(void *targetValue, LinkedList *linkedList,
-        bool (*comparisonFunction)(GenericData *valOne, GenericData *valTwo));
+        GenericComparisonFunction comparisonFunction);
 
-void find_all_indices_of_value(void *targetValue,
-        LinkedList *linkedList, int *indexStorage,
-        bool (*comparisonFunction)(GenericData *valOne, GenericData *valTwo));
+int * find_all_indices_of_value(void *targetValue, LinkedList *linkedList,
+        GenericComparisonFunction comparisonFunction);
 
-#endif //ASS3_NODELIB_H
+void sort_linked_list(LinkedList **originalList,
+        GenericComparisonFunction comparisonFunction,
+        GenericCopyFunction copyFunction,
+        GenericNodeFreeFunction nodeFreeFunction);
+
+#endif //ASS4_NODELIB_H
