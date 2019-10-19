@@ -78,7 +78,7 @@ typedef struct Node {
     struct Node *previous;
 } Node;
 
-char *string_printing_function(void *value);
+char *create_string_from_string_node(void *value);
 
 //Linked List functions
 LinkedList *create_linked_list(GenericNodeFreeFunction nodeFreeFunction);
@@ -116,7 +116,7 @@ int remove_nth_node(int nodeNumber, LinkedList *linkedList);
 //removes the specified node
 void remove_node(Node *currentNode);
 
-char *string_print_list_of_nodes(LinkedList *headNode, char *delimiter,
+char *create_string_from_list(LinkedList *headNode, char *delimiter,
         GenericNodeStringPrintFunction printingFunction);
 
 int iterate_list(LinkedList *linkedList, GenericNodeFunction nodeFunction);
@@ -131,5 +131,8 @@ void sort_linked_list(LinkedList **originalList,
         GenericComparisonFunction comparisonFunction,
         GenericCopyFunction copyFunction,
         GenericNodeFreeFunction nodeFreeFunction);
+
+void sort_linked_list_alternative(LinkedList *currentList,
+        GenericComparisonFunction comparisonFunction);
 
 #endif //ASS4_NODELIB_H

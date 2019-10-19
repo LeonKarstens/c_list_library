@@ -12,7 +12,7 @@ void card_printing_function(void *value, FILE *outputStream) {
 /*
  * Function for creating a string for a card's content from a  card node.
  * Used by hub to create player hand strings
- * (Used in string_print_list_of_nodes when working with cards)
+ * (Used in create_string_from_list when working with cards)
  */
 char *string_card_hand_printing_function(void *value) {
     Card *currentCard = value;
@@ -28,7 +28,7 @@ char *string_card_hand_printing_function(void *value) {
 /*
  * Function for creating a string from a card's content from a node.
  * Used by playerLib to create end of round strings for players
- * (Used in string_print_list_of_nodes when working with cards)
+ * (Used in create_string_from_list when working with cards)
  */
 char *string_card_end_of_round_printing_function(void *value) {
     Card *currentCard = value;

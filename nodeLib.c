@@ -6,7 +6,7 @@
  *
  * Returns a pointer to the created string
  */
-char *string_printing_function(void *value) {
+char *create_string_from_string_node(void *value) {
     char *currentString = value;
     size_t stringLength = strlen(currentString) + strlen(" ");
 
@@ -398,13 +398,12 @@ void print_list_of_nodes(LinkedList *headNode, FILE *outputStream,
  * calculated using determine_max_node_print_size() given as
  * maxCharsPerNode
  *
- * If the list is empty prints a new line character. todo
+ * If the list is empty prints a new line character. todo test
  */
-char *string_print_list_of_nodes(LinkedList *headNode, char *delimiter,
+char *create_string_from_list(LinkedList *headNode, char *delimiter,
         GenericNodeStringPrintFunction printingFunction) {
 
     Node *tempNode = get_first_node(headNode);
-
     if (tempNode == NULL) {
         return NULL; //checks if the list is empty
     }
@@ -647,7 +646,6 @@ int count_number_of_nodes(LinkedList *linkedList) {
  */
 bool transfer_nth_node(int nodeNumber, LinkedList *destinationList,
         LinkedList *originalList, GenericCopyFunction genericCopyFunction) {
-
     if (originalList == NULL || destinationList == NULL) {
         return false;
     }
@@ -659,7 +657,6 @@ bool transfer_nth_node(int nodeNumber, LinkedList *destinationList,
     }
 
     GenericData *copiedData = genericCopyFunction(tempNode->value);
-
 
     remove_node(tempNode);
     add_node(destinationList, copiedData);
@@ -701,6 +698,7 @@ int find_index_of_lowest_valued_node(LinkedList* linkedList,
  * Non - in place sorting algorithm which creates a new list and populates
  * it by finding the lowest value from the original list (form comparison
  * function) - removes from the old list and adds to the new list.
+ * todo not thread safe?
  */
 void sort_linked_list(LinkedList **originalList,
         GenericComparisonFunction comparisonFunction,
@@ -725,4 +723,89 @@ void sort_linked_list(LinkedList **originalList,
 
     delete_linked_list(*originalList);
     *originalList = sortedList;
+}
+
+/*
+ * Returns the first Node where the previous node has a 'greater value'
+ * according to the given comparison function
+ *
+ * The comparison function should return true iff the value of Node A > the
+ * value of Node B
+ *
+ * If no node is found, returns null.
+ */
+Node * get_next_lesser_valued_node(Node* startingNode,
+        GenericComparisonFunction comparisonFunction){
+
+    for (Node* currentNode = startingNode;
+            currentNode !=NULL;
+            currentNode = currentNode->next) {
+
+        if (currentNode->next == NULL){
+            return NULL;
+        }
+
+        if (comparisonFunction(currentNode->value, currentNode->next->value)){
+            return currentNode->next;
+        }
+    }
+
+    return NULL;
+}
+
+/*
+ * Swaps nodes A and B's values. The nodes are retrieved by node indexes
+ * starting from 0 from the given current doubly linked list
+ */
+void swap_nodes(Node* nodeA, Node* nodeB){
+    if (nodeA == NULL || nodeB == NULL){
+        return;
+    }
+//    printf("Swapping %s and %s\n", (char*)nodeA->value,
+//            (char*)nodeB->value);
+    GenericData *valueOfA = nodeA->value;
+    GenericData *valueOfB = nodeB->value;
+
+    nodeA->value = valueOfB;
+    nodeB->value = valueOfA;
+}
+
+/*
+ * In place sorting algorithm based on bubble sort which iterates through
+ * the list and swaps values which are 'lesser' than the previous value.
+ *
+ * Takes a list to sort and a comparison function (which returns true iff
+ * node A is greater in value than node B)
+ *
+ */
+void sort_linked_list_alternative(LinkedList *currentList,
+        GenericComparisonFunction comparisonFunction) {
+    bool isSorted = false;
+
+    while(!isSorted){
+        //Iterate through list of nodes
+        for (Node* currentNode = get_first_node(currentList);
+                currentNode !=NULL;
+                currentNode = currentNode->next){
+
+            Node* foundNode = get_next_lesser_valued_node(
+                    currentNode,
+                    comparisonFunction);
+
+            //no lesser valued nodes found, therefore check if list sorted
+            // from start
+            if (foundNode == NULL){
+
+                Node* unsortedNode = get_next_lesser_valued_node(get_first_node
+                        (currentList), comparisonFunction);
+
+                if(unsortedNode == NULL){
+                    isSorted = true;
+                    continue;
+                }
+            } else{
+                swap_nodes(foundNode->previous, foundNode);
+            }
+        }
+    }
 }
