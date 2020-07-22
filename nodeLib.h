@@ -10,7 +10,7 @@
  * Data that is non specific (void pointer) so that anything can be stored
  * in linked list (including pointers to structs)
  */
-typedef void *GenericData; //style.sh bug - PIAZZA 365
+typedef void *GenericData;
 
 /*
  * A function pointer which takes a void pointer (could be a pointer to

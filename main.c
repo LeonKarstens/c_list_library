@@ -57,13 +57,6 @@ int main() {
     print_list_of_nodes(linkedListOne, stdout, card_printing_function);
     printf("\n");
 
-    printf("List One:");
-    add_node_to_start(linkedListOne, (GenericData *) a);
-    print_list_of_nodes(linkedListOne, stdout, card_printing_function);
-    printf("\n");
-
-
-
     index = return_first_index_of_value(a, linkedListOne,
             card_comparison_function);
     printf("The index of %s was: %d\n", a->contents, index);
@@ -85,6 +78,9 @@ int main() {
     int* storageArray = find_all_indices_of_value(d, linkedListOne,
             card_suit_comparison_function);
     print_storage_array(storageArray);
+
+    free(storageArray);
+    free(d);
 
     delete_linked_list(linkedListOne);
     delete_linked_list(linkedListTwo);
