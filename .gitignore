@@ -1,2 +1,4 @@
 /nodeLib.o
 /cmake-build-debug/
+cmake-build-default-wsl/
+cmake-build-debug-wsl/
